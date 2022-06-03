@@ -1,10 +1,13 @@
 from re import template
 from app import app
-from flask import render_template, redirect, url_for
+from flask import render_template, redirect, url_for, request
 import requests
 import json
 from bs4 import BeautifulSoup
-
+import os
+import pandas as pd
+import numpy as np
+from matplotlib import pyplot as plt
 
 def get_item(ancestor, selector, attribute=None, return_list=False):
     try:
@@ -35,30 +38,34 @@ def index(name="<<Hello World>>"):
     return render_template("index.html.jinja", text=name)
 
 
-@app.route('/extract'/<product_id>)
-def extraxt(product_id)
-    url = f"https://www.ceneo.pl/{product_id}#tab=reviews"
-    all_opinions = []
-    while(url):
-     print(url)
-     response = requests.get(url)
-     page = BeautifulSoup(response.text, "html.parser")
-     opinions = page.select("div.js_product-review")
-     for opinion in opinions:
-         single_opinion = {
-             key:get_item(opinion, *value)
+@app.route('/extract', methods=["POST", "GET"])
+def extraxt():
+    if request.metohod == "POST":
+        product_id = request.form.get("product_id")
+        url = f"https://www.ceneo.pl/{product_id}#tab=reviews"
+        all_opinions = []
+        while(url):
+            response = requests.get(url)
+            page = BeautifulSoup(response.text, "html.parser")
+            opinions = page.select("div.js_product-review")
+            for opinion in opinions:
+                single_opinion = {
+                 key:get_item(opinion, *value)
                     for key, value in selectors.items()
-            }
-            single_opinion["opinion_id"] = opinion["data-entry-id"]
-            all_opinions.append(single_opinion)
-        try:
-            url = "https://www.ceneo.pl"+page.select_one("a.pagination__next")["href"]
-        except TypeError:
-            url = None
-
-with open(f"opinions/{product_id}.json", "w", encoding="UTF-8") as jf:
-    json.dump(all_opinions, jf, indent=4, ensure_ascii=False)
-return redirect(url_for('product',product_id=product_id))
+                }
+                single_opinion["opinion_id"] = opinion["data-entry-id"]
+                all_opinions.append(single_opinion)
+            try:
+                url = "https://www.ceneo.pl"+get_item("a.pagination__next", "href")
+            except TypeError:
+             url = None
+            if not os.path.exists("app/opinions"):
+                os.makedirs("app/opinions")
+            with open(f"opinions/{product_id}.json", "w", encoding="UTF-8") as jf:
+                json.dump(all_opinions, jf, indent=4, ensure_ascii=False)
+        return redirect(url_for('product',product_id=product_id))
+    else:
+        return render_template("extract.hmtl.jinja")
 
 @app.route('/products/')
 def products():
@@ -70,6 +77,37 @@ def author():
 
 @app.route('/product/<product_id>')
 def product(product_id):
-    return remder template
+    opinions = pd.read_json(f"app/opinions/{product_id}.json")
+    opinions.stars = opinions.stars.map(lambda x: float(x.split("/")[0].replace(",", ".")))
+    stats = {
+        "opinions_count": len(opinions.index),
+        "pros_count": opinions.pros.map(bool).sum(),
+        "cons_count": opinions.cons.map(bool).sum(),
+        "average_score": opinions.stars.mean().round(2)
+    }
+    if not os.path.exists("app/plots"
+    )os
+    recommendation = opinions.recommendation.value_counts(dropna = False).sort_index().reindex(["Nie polecam", "Polecam", None])
+    recommendation.plot.pie(
+        label="", 
+        autopct="%1.1f%%", 
+        colors=["crimson", "forestgreen", "lightskyblue"],
+        labels=["Nie polecam", "Polecam", "Nie mam zdania"]
+    )
+    plt.title("Rekomendacja")
+    plt.savefig(f"app/static/plots/{product_id}_recommendations.png")
+    plt.close()
+
+    stars = opinions.stars.value_counts().sort_index().reindex(list(np.arange(0,5.5,0.5)), fill_value=0)
+    stars.plot.bar()
+    plt.title("Oceny produktu")
+    plt.xlabel("Liczba gwiazdek")
+    plt.ylabel("Liczba opinii")
+    plt.grid(True)
+    plt.xticks(rotation=0)
+    plt.savefig(f"app/static/plots/{product_id}_stars.png")
+    plt.close()
+    return render_template("product.html.jinja", stats=stats, product_id=product_id, opinions=opinions)
+
 @app.route('/')
     pass
