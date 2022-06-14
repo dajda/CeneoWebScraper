@@ -42,13 +42,14 @@ class Product():
         return self
     
     def opinions_to_df(self):
+        opinions =
         return pd.read_json(json.dumps([opinion.to_dict() for opinion in self.opinions]))
 
     def calculate_stats(self):
         opinions = self.opinions_to_df()
         opinions["stars"] = opinions["stars"].map(lambda x: float(x.split("/")[0].replace(",", ".")))
         
-        self.opinions_count = len(opinions)
+        self.opinions_count = int(opinions["pros"].map(bool).sum())
         self.pros_count = opinions["pros"].map(bool).sum()
         self.cons_count = opinions["cons"].map(bool).sum()
         self.average_score = opinions["stars"].mean().round(2)
@@ -83,7 +84,7 @@ class Product():
         return self
 
     def __str__(self) -> str:
-        pass
+        
 
     def __repr__(self) -> str:
         pass
@@ -91,6 +92,15 @@ class Product():
     def to_dict(self) -> dict:
         pass
 
+    def stats_to_dict(self):
+        self.product_id = product_id
+        self.product_name = product_name
+        self.opinions = opinions
+        self.opinions_count = opinions_count
+        self.pros_count = pros_count
+        self.cons_count = cons_count
+        self.average_score = average_score
+        
     def export_opinions(self):
         if not os.path.exists("app/opinions"):
             os.makedirs("app/opinions")
@@ -99,4 +109,19 @@ class Product():
         pass
 
     def export_product(swelf):
-        pass
+        if not os.path.esists("app/products"):
+            os.makedirs("app/products")
+        with open(f"app/product")
+
+def import_product(self):
+    if not os.path.exists(f"app/products/{self.product_id}.json"):
+        with open(f"app/products/self.product_id)
+        
+        self.product_id = product_id
+        self.product_name = product_name
+        self.opinions = opinions
+        self.opinions_count = opinions_count
+        self.pros_count = pros_count
+        self.cons_count = cons_count
+        self.average_score = average_score
+    with open(f"app.opinions/{self.product_id}.json", "r", encoding="UTF-8") as json
