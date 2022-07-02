@@ -4,9 +4,11 @@ import json
 import os
 from app.models.product import Product
 
+
 @app.route('/')
 def index():
     return render_template("index.html.jinja")
+
 
 @app.route('/extract', methods=["POST", "GET"])
 def extract():
@@ -16,28 +18,33 @@ def extract():
         product.extract_name()
         if product.product_name:
             product.extract_opinions().calculate_stats().draw_charts()
-            product.ectract_opinions().calculate_stats().draw_charts()
-            product.eport_opinions()
+            product.export_opinions()
             product.export_product()
         else:
-            error = ""
-            return render_template("extract.html.jinja")
+            error = "Nie działa"
+            return render_template("extract.html.jinja", error=error)
 
         return redirect(url_for('product', product_id=product_id))
     else:
         return render_template("extract.html.jinja")
 
+
 @app.route('/products')
 def products():
-    products = [filename.split(".")[0] for filename in os.listdir("app/opinions")]
+    products = [filename.split(".")[0]
+                for filename in os.listdir("app/opinions")]
     return render_template("products.html.jinja", products=products)
+
 
 @app.route('/author')
 def author():
     return render_template("author.html.jinja")
 
+
 @app.route('/product/<product_id>')
 def product(product_id):
-    product = Product
-    product.
+    product = Product(product_id)
+    product.import_product()
+    stats = product.stats_to_dict()
+    opinions = product.opinions_to_df()
     return render_template("product.html.jinja", product_id=product_id, stats=stats, opinions=opinions)
