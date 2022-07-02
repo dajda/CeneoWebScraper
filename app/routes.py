@@ -48,3 +48,4 @@ def product(product_id):
     stats = product.stats_to_dict()
     opinions = product.opinions_to_df()
     return render_template("product.html.jinja", product_id=product_id, stats=stats, opinions=opinions)
+    
