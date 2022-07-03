@@ -3,11 +3,17 @@ from flask import render_template, redirect, url_for, request
 import json
 import os
 from app.models.product import Product
+import markdown
 
 
 @app.route('/')
 def index():
-    return render_template("index.html.jinja")
+    readme = ''
+
+    with open('README.md', 'r') as rf:
+        readme = markdown.markdown(rf.read(), extensions=['markdown.extensions.tables'])
+
+    return render_template('index.html.jinja', readme=readme)
 
 
 @app.route('/extract', methods=["POST", "GET"])
